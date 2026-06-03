@@ -1,0 +1,172 @@
+{
+  "title": "Wealth360 AI Advisor Copilot",
+  "uid": "wealth360-poc-v1",
+  "description": "Observability dashboard for the Wealth360 3-agent LangGraph system",
+  "tags": ["wealth360", "langgraph", "ai-agents"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "agent",
+        "label": "Agent",
+        "type": "custom",
+        "query": "advisor,research,compliance",
+        "current": { "text": "All", "value": "$__all" },
+        "includeAll": true,
+        "multi": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Agent Call Rate (req/min)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "sum by (agent_name) (rate(traces_spanmetrics_calls_total{span_name=~\"agent\\..*\"}[5m]) * 60)",
+          "legendFormat": "{{agent_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqpm",
+          "custom": { "lineWidth": 2 }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Agent Latency P95 (ms)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (span_name, le) (rate(traces_spanmetrics_duration_milliseconds_bucket{span_name=~\"agent\\..*\"}[5m])))",
+          "legendFormat": "{{span_name}} p95"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": { "lineWidth": 2 }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Error Rate by Agent (%)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "100 * sum by (span_name) (rate(traces_spanmetrics_calls_total{span_name=~\"agent\\..*\", status_code=\"STATUS_CODE_ERROR\"}[5m])) / sum by (span_name) (rate(traces_spanmetrics_calls_total{span_name=~\"agent\\..*\"}[5m]))",
+          "legendFormat": "{{span_name}} errors"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "HTTP Request Rate (FastAPI)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "sum by (http_route) (rate(traces_spanmetrics_calls_total{span_name=~\"/api/.*\"}[5m]) * 60)",
+          "legendFormat": "{{http_route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqpm" }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Recent Agent Traces",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 10 },
+      "datasource": { "type": "tempo", "uid": "${tempo_datasource}" },
+      "targets": [
+        {
+          "queryType": "traceql",
+          "query": "{ span.agent.name != \"\" }",
+          "limit": 20
+        }
+      ],
+      "options": {
+        "frameType": "trace"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Supervisor Routing Breakdown",
+      "type": "piechart",
+      "gridPos": { "x": 0, "y": 26, "w": 8, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "sum by (span_name) (increase(traces_spanmetrics_calls_total{span_name=~\"agent\\..*\"}[1h]))",
+          "legendFormat": "{{span_name}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Agent P50 / P95 / P99 Latency",
+      "type": "stat",
+      "gridPos": { "x": 8, "y": 26, "w": 16, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(traces_spanmetrics_duration_milliseconds_bucket{span_name=~\"agent\\..*\"}[5m])))",
+          "legendFormat": "P50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_duration_milliseconds_bucket{span_name=~\"agent\\..*\"}[5m])))",
+          "legendFormat": "P95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(traces_spanmetrics_duration_milliseconds_bucket{span_name=~\"agent\\..*\"}[5m])))",
+          "legendFormat": "P99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms" }
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "name": "datasource",
+      "label": "Prometheus datasource",
+      "type": "datasource",
+      "pluginId": "prometheus"
+    },
+    {
+      "name": "tempo_datasource",
+      "label": "Tempo datasource",
+      "type": "datasource",
+      "pluginId": "tempo"
+    }
+  ]
+}
