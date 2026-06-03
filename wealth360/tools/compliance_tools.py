@@ -25,7 +25,7 @@ def check_policy_compliance(client_id: str, proposed_action: str) -> dict:
                     violations.append({
                         "rule_id": rule["rule_id"],
                         "description": rule["description"],
-                        "detail": f"{holding['ticker']} is at {holding['weight']:.0%} — exceeds {rule['threshold']:.0%} limit",
+                        "detail": f"{holding['ticker']} is at {holding['weight']:.0%} - exceeds {rule['threshold']:.0%} limit",
                     })
 
         elif rule["rule_id"] in ("POL-002", "POL-003"):
@@ -34,7 +34,7 @@ def check_policy_compliance(client_id: str, proposed_action: str) -> dict:
                 violations.append({
                     "rule_id": rule["rule_id"],
                     "description": rule["description"],
-                    "detail": f"Fixed income at {fi_weight:.0%} — below {rule['threshold']:.0%} minimum for {risk_profile} profile",
+                    "detail": f"Fixed income at {fi_weight:.0%} - below {rule['threshold']:.0%} minimum for {risk_profile} profile",
                 })
 
     return {
@@ -85,8 +85,8 @@ def check_restricted_securities(tickers: list[str]) -> dict:
         "passed": passed,
         "compliant": len(flagged) == 0,
         "note": (
-            f"{len(flagged)} restricted security/securities found — trading blocked"
+            f"{len(flagged)} restricted security/securities found - trading blocked"
             if flagged
-            else "All securities cleared — no restrictions found"
+            else "All securities cleared - no restrictions found"
         ),
     }

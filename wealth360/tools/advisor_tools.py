@@ -79,7 +79,7 @@ def generate_action_recommendations(client_id: str, context: str = "") -> list[d
         recommendations.append({
             "action": "maintain",
             "priority": "low",
-            "reason": "Portfolio is within target parameters — no immediate action required",
+            "reason": "Portfolio is within target parameters - no immediate action required",
         })
 
     return recommendations
@@ -98,9 +98,9 @@ def get_risk_overview(client_id: str) -> dict:
         **portfolio["risk_metrics"],
         "interpretation": {
             "var_95": f"95% VaR: ${abs(portfolio['risk_metrics']['var_95']):,.0f} potential daily loss",
-            "beta": f"Beta {portfolio['risk_metrics']['beta']} — "
+            "beta": f"Beta {portfolio['risk_metrics']['beta']} - "
                     f"{'defensive' if portfolio['risk_metrics']['beta'] < 0.9 else 'market-aligned' if portfolio['risk_metrics']['beta'] < 1.1 else 'aggressive'}",
-            "sharpe": f"Sharpe {portfolio['risk_metrics']['sharpe_ratio']} — "
+            "sharpe": f"Sharpe {portfolio['risk_metrics']['sharpe_ratio']} - "
                       f"{'strong' if portfolio['risk_metrics']['sharpe_ratio'] > 1.5 else 'adequate'} risk-adjusted return",
         },
     }
